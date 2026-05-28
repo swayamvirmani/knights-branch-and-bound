@@ -20,22 +20,13 @@ class ILPSolver:
         self.n = n
         self.board = Board(n)
         self.attack_matrix = self.board.get_attack_matrix()
-
-    def solve(self, verbose: bool = False) -> dict:
-        """
-        Solve the ILP directly with Gurobi.
-
-        Args:
-            verbose: if True, print Gurobi log. Default False.
-
-        Returns:
-            dict with keys:
-                'status'       : 'optimal' | 'infeasible' | 'error'
-                'num_knights'  : int, minimum number of knights
-                'placement'    : list of square indices with knights
-                'solve_time'   : float, wall-clock seconds
-                'obj_value'    : float, objective value
-        """
+        
+    def solve(
+    self,
+    verbose: bool = False,
+    relax: bool = False,
+    fixed_vars: dict[int, int] = None
+        ) -> dict:
         if not GUROBI_AVAILABLE:
             return {'status': 'error', 'message': 'Gurobi not installed'}
 
@@ -45,6 +36,8 @@ class ILPSolver:
             'placement': [],
             'solve_time': 0.0,
             'obj_value': None,
+            'x_values': [],
+            'relaxed': relax,
         }
 
         n_sq = self.board.num_squares
@@ -59,9 +52,28 @@ class ILPSolver:
             if not verbose:
                 model.setParam("OutputFlag", 0)
 
-            # Decision variables: x[i] in {0, 1}
-            x = model.addVars(n_sq, vtype=GRB.BINARY, name="x")
-
+                      
+            if relax:
+                x = model.addVars(
+                    n_sq,
+                    vtype=GRB.CONTINUOUS,
+                    lb=0.0,
+                    ub=1.0,
+                    name="x"
+                )
+            else:
+                 x = model.addVars(
+                     n_sq,
+                    vtype=GRB.BINARY,
+                    name = "x"
+                 )
+            if fixed_vars:
+                for var_idx, value in fixed_vars.items():
+                    model.addConstr(
+            x[var_idx] == value,
+            name=f"fixed_{var_idx}"
+        )
+                 
             # Objective: minimize total knights placed
             model.setObjective(gp.quicksum(x[i] for i in range(n_sq)), GRB.MINIMIZE)
 
@@ -92,11 +104,15 @@ class ILPSolver:
             if model.Status == GRB.OPTIMAL:
                 result['status'] = 'optimal'
                 result['obj_value'] = model.ObjVal
+                result['x_values'] = [
+                 x[i].X for i in range(n_sq)
+                ]
                 result['num_knights'] = int(round(model.ObjVal))
-                result['placement'] = [
+                if not relax:
+                    result['placement'] = [
                     i for i in range(n_sq)
                     if x[i].X > 0.5
-                ]
+             ]
             elif model.Status == GRB.INFEASIBLE:
                 result['status'] = 'infeasible'
             else:
@@ -114,7 +130,7 @@ class ILPSolver:
         print(f"ILP Solver — {self.n}x{self.n} board")
         print(f"{'='*50}")
 
-        result = self.solve()
+        result = self.solve(relax = False)
 
         if result['status'] == 'optimal':
             print(f"Status      : OPTIMAL")

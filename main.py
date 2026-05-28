@@ -140,7 +140,7 @@ def parse_args():
 
     parser.add_argument(
         '--mode',
-        choices=['ilp', 'bnb', 'benchmark', 'verify', 'experiment', 'display'],
+        choices=['ilp', 'lp', 'bnb', 'benchmark', 'verify', 'experiment', 'display'],
         default='ilp',
         help=(
             "ilp        : solve with ILP (ground truth)\n"
@@ -171,12 +171,33 @@ def parse_args():
 
     return parser.parse_args()
 
-
 def main():
     args = parse_args()
 
     if args.mode == 'ilp':
         run_ilp(args.n, args.verbose)
+
+    elif args.mode == 'lp':
+        from ilp_solver import ILPSolver
+
+        solver = ILPSolver(args.n)
+
+        result = solver.solve(
+            verbose=args.verbose,
+            relax=True
+        )
+
+        print("\nLP Relaxation Result")
+        print("=" * 50)
+
+        print(f"Objective Value : {result['obj_value']:.4f}")
+        print(f"Solve Time      : {result['solve_time']:.4f}s")
+
+        print("\nFractional Variables:")
+
+        for i, val in enumerate(result['x_values']):
+            if val > 1e-6:
+                print(f"x[{i}] = {val:.4f}")
 
     elif args.mode == 'bnb':
         run_bnb(args.n, args.strategy, args.branch_var, args.verbose)
@@ -192,7 +213,3 @@ def main():
 
     elif args.mode == 'display':
         run_display(args.n)
-
-
-if __name__ == "__main__":
-    main()
