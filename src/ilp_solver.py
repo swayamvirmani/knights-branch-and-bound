@@ -69,10 +69,11 @@ class ILPSolver:
                  )
             if fixed_vars:
                 for var_idx, value in fixed_vars.items():
-                    model.addConstr(
-            x[var_idx] == value,
-            name=f"fixed_{var_idx}"
-        )
+                
+                 x[var_idx].lb = float(value)
+                x[var_idx].ub = float(value)
+            
+        
                  
             # Objective: minimize total knights placed
             model.setObjective(gp.quicksum(x[i] for i in range(n_sq)), GRB.MINIMIZE)

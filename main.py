@@ -51,9 +51,6 @@ def run_bnb(n: int, strategy: str, branch_var: str, verbose: bool = False):
     board.display(result.get('placement', []))
 
 
-# ------------------------------------------------------------------
-# Mode: ILP benchmark
-# ------------------------------------------------------------------
 
 def run_benchmark(sizes: list[int]):
     try:
