@@ -170,10 +170,7 @@ knights-branch-and-bound/
 │                                #   print_comparison_table, print_header
 │
 ├── experiments/                 # Experiment harness
-│   ├── run_experiments.py       # Benchmarks all strategy combos,
-│   │                            #   saves CSV + opens interactive charts
-│   └── results/
-│       └── bnb_strategies_comparison.csv
+│   ├── run_experiments.py       # Benchmarks all strategy combos
 │
 ├── tests/                       # Unit tests — board structure & solver
 │
