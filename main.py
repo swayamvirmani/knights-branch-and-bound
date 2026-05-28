@@ -210,3 +210,6 @@ def main():
 
     elif args.mode == 'display':
         run_display(args.n)
+
+if __name__ == "__main__":
+    main()
